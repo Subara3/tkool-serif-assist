@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+build/
+*.spec
+dist/
+release/
+*.zip
+*.bak
+_test_*
+_preview_tmp.txt
+_check_tmp.txt
+_exec_tmp.txt
+page/preview.png
+page/article_preview.png

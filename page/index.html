@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>セリフ一括入力ツール for RPGツクールMZ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0c0e14;
+  --bg-surface: #141822;
+  --bg-card: #1a1f2e;
+  --text: #c8cdd8;
+  --text-bright: #e8ecf4;
+  --text-dim: #6b7280;
+  --accent-gold: #d4a853;
+  --accent-gold-dim: rgba(212,168,83,.15);
+  --accent-blue: #4a8db7;
+  --accent-red: #c45c5c;
+  --border: rgba(255,255,255,.06);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Space Grotesk', 'Noto Sans JP', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* --- 背景パターン --- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(212,168,83,.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container { max-width: 960px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+/* --- ヒーロー --- */
+.hero {
+  padding: 100px 0 80px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.hero-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .75rem;
+  color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+  border: 1px solid rgba(212,168,83,.25);
+  padding: 4px 14px;
+  border-radius: 20px;
+  letter-spacing: .08em;
+  margin-bottom: 28px;
+}
+.hero h1 {
+  font-family: 'Cormorant Garamond', 'Noto Sans JP', serif;
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  line-height: 1.2;
+  margin-bottom: 20px;
+  letter-spacing: -.02em;
+}
+.hero h1 span { color: var(--accent-gold); }
+.hero-sub {
+  font-size: 1.1rem;
+  color: var(--text-dim);
+  max-width: 540px;
+  margin: 0 auto 40px;
+}
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-gold);
+  color: #0c0e14;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 14px 32px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: transform .2s, box-shadow .2s;
+}
+.hero-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212,168,83,.25);
+}
+.hero-cta svg { width: 18px; height: 18px; }
+
+/* --- デモ画像グリッド --- */
+.demo {
+  padding: 80px 0;
+  border-bottom: 1px solid var(--border);
+}
+.demo h2 {
+  font-family: 'Cormorant Garamond', 'Noto Sans JP', serif;
+  font-size: 2rem;
+  color: var(--text-bright);
+  text-align: center;
+  margin-bottom: 12px;
+}
+.demo-sub {
+  text-align: center;
+  color: var(--text-dim);
+  margin-bottom: 48px;
+}
+.demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.demo-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color .3s;
+}
+.demo-card:hover { border-color: rgba(212,168,83,.2); }
+.demo-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.demo-card-label {
+  padding: 12px 16px;
+  font-size: .85rem;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+}
+.demo-card-label strong { color: var(--accent-gold); }
+.demo-wide { grid-column: 1 / -1; }
+
+/* --- フォーマット --- */
+.format {
+  padding: 80px 0;
+  border-bottom: 1px solid var(--border);
+}
+.format h2 {
+  font-family: 'Cormorant Garamond', 'Noto Sans JP', serif;
+  font-size: 2rem;
+  color: var(--text-bright);
+  margin-bottom: 40px;
+  text-align: center;
+}
+.format-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+.format-code {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .85rem;
+  line-height: 1.9;
+  color: #abb2bf;
+  overflow-x: auto;
+}
+.format-code .cm { color: #6a9955; }
+.format-code .hd { color: #569cd6; font-weight: 500; }
+.format-code .st { color: #ce9178; }
+.format-code .nr { color: #c586c0; }
+
+.format-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .9rem;
+}
+.format-table th {
+  background: var(--bg-card);
+  color: var(--accent-gold);
+  padding: 10px 14px;
+  text-align: left;
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+.format-table td {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  vertical-align: top;
+}
+.format-table code {
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(255,255,255,.05);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: .8rem;
+  color: var(--accent-blue);
+}
+
+/* --- 料金 --- */
+.pricing {
+  padding: 80px 0;
+  border-bottom: 1px solid var(--border);
+}
+.pricing h2 {
+  font-family: 'Cormorant Garamond', 'Noto Sans JP', serif;
+  font-size: 2rem;
+  color: var(--text-bright);
+  text-align: center;
+  margin-bottom: 48px;
+}
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.pricing-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color .3s, transform .2s;
+}
+.pricing-card:hover {
+  border-color: rgba(212,168,83,.2);
+  transform: translateY(-4px);
+}
+.pricing-card.featured {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 40px rgba(212,168,83,.08);
+}
+.pricing-tier {
+  font-size: .8rem;
+  color: var(--accent-gold);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.pricing-name {
+  font-family: 'Cormorant Garamond', 'Noto Sans JP', serif;
+  font-size: 1.4rem;
+  color: var(--text-bright);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.pricing-price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+.pricing-price small { font-size: .9rem; font-weight: 400; color: var(--text-dim); }
+.pricing-desc {
+  font-size: .9rem;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+  flex: 1;
+}
+.pricing-list {
+  list-style: none;
+  margin-bottom: 28px;
+}
+.pricing-list li {
+  padding: 6px 0;
+  font-size: .88rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.pricing-list li::before {
+  content: '✓ ';
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+.pricing-btn {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  font-size: .9rem;
+  transition: transform .2s, box-shadow .2s;
+}
+.pricing-btn-primary {
+  background: var(--accent-gold);
+  color: #0c0e14;
+}
+.pricing-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.pricing-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+/* --- 使い方 --- */
+.howto {
+  padding: 80px 0;
+  border-bottom: 1px solid var(--border);
+}
+.howto h2 {
+  font-family: 'Cormorant Garamond', 'Noto Sans JP', serif;
+  font-size: 2rem;
+  color: var(--text-bright);
+  text-align: center;
+  margin-bottom: 48px;
+}
+.howto-steps {
+  display: grid;
+  gap: 0;
+  counter-reset: step;
+}
+.howto-step {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 20px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+  counter-increment: step;
+}
+.howto-step:last-child { border-bottom: none; }
+.howto-num {
+  width: 48px;
+  height: 48px;
+  background: var(--accent-gold-dim);
+  border: 1px solid rgba(212,168,83,.25);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+.howto-num::before { content: counter(step); }
+.howto-title { font-weight: 600; color: var(--text-bright); margin-bottom: 4px; }
+.howto-desc { font-size: .9rem; color: var(--text-dim); }
+
+/* --- 注意事項 --- */
+.notes {
+  padding: 80px 0;
+}
+.notes h2 {
+  font-family: 'Cormorant Garamond', 'Noto Sans JP', serif;
+  font-size: 2rem;
+  color: var(--text-bright);
+  text-align: center;
+  margin-bottom: 32px;
+}
+.notes-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+}
+.notes-box li {
+  padding: 6px 0;
+  font-size: .9rem;
+  color: var(--text-dim);
+  list-style: disc;
+  margin-left: 20px;
+}
+.notes-box strong { color: var(--accent-red); }
+
+/* --- フッター --- */
+footer {
+  text-align: center;
+  padding: 40px 0;
+  font-size: .8rem;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+}
+
+/* --- レスポンシブ --- */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 2rem; }
+  .demo-grid { grid-template-columns: 1fr; }
+  .format-cols { grid-template-columns: 1fr; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .hero { padding: 60px 0 50px; }
+}
+
+/* --- フェードインアニメーション --- */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity .6s ease-out, transform .6s ease-out;
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
+</head>
+<body>
+
+<!-- ヒーロー -->
+<section class="hero">
+<div class="container">
+  <div class="hero-badge">RPG MAKER MZ TOOL</div>
+  <h1>セリフ入力を、<br><span>一瞬で。</span></h1>
+  <p class="hero-sub">テキストファイルに書いたセリフを、RPGツクールMZのイベントコマンドに自動変換。ツクールを開かずに、何百行でも一括で流し込めます。</p>
+  <a href="#pricing" class="hero-cta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    無料ダウンロード
+  </a>
+</div>
+</section>
+
+<!-- デモ -->
+<section class="demo fade-in">
+<div class="container">
+  <h2>こうなります</h2>
+  <p class="demo-sub">テキストファイルから自動生成されたセリフが、そのままゲーム内に表示されます。</p>
+  <div class="demo-grid">
+    <div class="demo-card">
+      <img src="../doc/ss_04_serif2.png" alt="リードのセリフ">
+      <div class="demo-card-label"><strong>顔グラ+名前</strong> — 話者ごとに自動設定</div>
+    </div>
+    <div class="demo-card">
+      <img src="../doc/ss_04_serif4.png" alt="ナレーション">
+      <div class="demo-card-label"><strong>ナレーション</strong> — 背景「暗くする」にも対応</div>
+    </div>
+    <div class="demo-card demo-wide">
+      <img src="../doc/ss_05_gui.png" alt="GUIツール">
+      <div class="demo-card-label"><strong>専用エディタ</strong> — シンタックスハイライト＆リアルタイムプレビュー</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- フォーマット -->
+<section class="format fade-in">
+<div class="container">
+  <h2>書き方はシンプル</h2>
+  <div class="format-cols">
+    <div class="format-code">
+<span class="cm"># シーン1: 冒頭</span>
+
+<span class="hd">【リード/Actor1:0】</span>
+ここが噂の古代遺跡か……。
+思ったより広いな。
+
+<span class="hd">【エリナ/Actor1:1】</span>
+すごい！
+壁一面に文字が刻まれてるわ。
+
+<span class="cm"># ナレーション</span>
+<span class="st">{bg=1}</span>
+<span class="nr">【】</span>
+二人は遺跡の奥へと
+足を踏み入れた。
+    </div>
+    <div>
+      <table class="format-table">
+        <tr><th>書き方</th><th>意味</th></tr>
+        <tr><td><code>【名前/顔:番号】</code></td><td>話者＋顔グラ指定</td></tr>
+        <tr><td><code>【名前】</code></td><td>顔グラなし</td></tr>
+        <tr><td><code>【】</code></td><td>ナレーション</td></tr>
+        <tr><td><code>{bg=0/1/2}</code></td><td>背景変更<br>0=ウィンドウ 1=暗くする 2=透明</td></tr>
+        <tr><td><code>{pos=0/1/2}</code></td><td>位置変更<br>0=上 1=中 2=下</td></tr>
+        <tr><td><code>{mode=replace}</code></td><td>既存コマンドを置換</td></tr>
+        <tr><td><code>#</code></td><td>コメント（無視される）</td></tr>
+        <tr><td>空行</td><td>メッセージの区切り</td></tr>
+      </table>
+      <p style="margin-top:16px; font-size:.85rem; color:var(--text-dim)">
+        4行を超えると自動分割。<br>
+        MZ制御文字（\C[n], \V[n], \N[n] 等）もそのまま使えます。<br>
+        UTF-8 / Shift-JIS 自動判定。
+      </p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 料金 -->
+<section class="pricing fade-in" id="pricing">
+<div class="container">
+  <h2>料金プラン</h2>
+  <div class="pricing-grid">
+
+    <div class="pricing-card">
+      <div class="pricing-tier">Free</div>
+      <div class="pricing-name">ツール配布</div>
+      <div class="pricing-price">無料</div>
+      <p class="pricing-desc">ダウンロードしてご自由にお使いください。</p>
+      <ul class="pricing-list">
+        <li>GUIエディタ</li>
+        <li>リアルタイムプレビュー</li>
+        <li>チェッカー機能</li>
+        <li>Map / コモンイベント対応</li>
+        <li>追加 / 置換モード</li>
+      </ul>
+      <a href="#" class="pricing-btn pricing-btn-secondary">ダウンロード</a>
+    </div>
+
+    <div class="pricing-card featured">
+      <div class="pricing-tier">Service</div>
+      <div class="pricing-name">セリフ変換代行</div>
+      <div class="pricing-price">3,000円〜 <small>+ 10円/行</small></div>
+      <p class="pricing-desc">テキスト原稿をお送りいただければ、MapXXX.jsonに変換してお返しします。</p>
+      <ul class="pricing-list">
+        <li>AIを活用した高速変換</li>
+        <li>顔グラ・背景・位置指定</li>
+        <li>納品後の修正1回無料</li>
+        <li>フォーマット整形込み</li>
+      </ul>
+      <a href="#" class="pricing-btn pricing-btn-primary">依頼する</a>
+    </div>
+
+    <div class="pricing-card">
+      <div class="pricing-tier">Custom</div>
+      <div class="pricing-name">専用ツール構築</div>
+      <div class="pricing-price">50,000円</div>
+      <p class="pricing-desc">あなたのプロジェクト専用にカスタマイズしたツールを構築します。</p>
+      <ul class="pricing-list">
+        <li>キャラ名プリセット設定</li>
+        <li>顔グラ自動マッピング</li>
+        <li>専用テンプレート作成</li>
+        <li>使い方説明付き</li>
+      </ul>
+      <a href="#" class="pricing-btn pricing-btn-secondary">相談する</a>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<!-- 使い方 -->
+<section class="howto fade-in">
+<div class="container">
+  <h2>使い方</h2>
+  <div class="howto-steps">
+    <div class="howto-step">
+      <div class="howto-num"></div>
+      <div>
+        <div class="howto-title">serif_gui.exe を起動</div>
+        <div class="howto-desc">ダブルクリックで起動。Python不要、exe単体で動きます。</div>
+      </div>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num"></div>
+      <div>
+        <div class="howto-title">セリフを書く</div>
+        <div class="howto-desc">左のエディタに入力するか、テキストファイルを読み込みます。右側にリアルタイムでプレビューが表示されます。</div>
+      </div>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num"></div>
+      <div>
+        <div class="howto-title">ツクールMZを閉じる</div>
+        <div class="howto-desc">開いたまま書き込むと上書きされてしまうため、必ず閉じてから実行してください。</div>
+      </div>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num"></div>
+      <div>
+        <div class="howto-title">マップファイルを選択して書き込み</div>
+        <div class="howto-desc">プロジェクトの data/MapXXX.json を選択し、イベントIDを指定して「書き込み実行」。存在しないイベントIDは自動で作成されます。</div>
+      </div>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num"></div>
+      <div>
+        <div class="howto-title">ツクールMZで確認</div>
+        <div class="howto-desc">プロジェクトを開き直すと、セリフが反映されています。</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 注意事項 -->
+<section class="notes fade-in">
+<div class="container">
+  <h2>注意事項</h2>
+  <div class="notes-box">
+    <ul>
+      <li><strong>書き込み前にツクールMZを必ず閉じてください。</strong>開いたまま実行すると、ツクール側の保存で上書きされます。</li>
+      <li>元のMapファイルはタイムスタンプ付きで自動バックアップされます（10世代保持）。</li>
+      <li>顔ファイル名はプロジェクトの <code>img/faces/</code> フォルダにあるファイル名（拡張子なし）を指定してください。</li>
+      <li>ウイルス対策ソフトがexeをブロックする場合があります。その場合は除外設定を追加してください。</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>セリフ一括入力ツール for RPGツクールMZ</p>
+  </div>
+</footer>
+
+<script>
+// フェードインアニメーション
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

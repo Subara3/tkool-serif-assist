@@ -8,7 +8,9 @@
 
 ## ダウンロード
 
-[Releases](../../releases) から最新版の ZIP をダウンロードしてください。Python不要、exe単体で動きます。
+**[最新版をダウンロード（v1.0.0）](https://github.com/Subara3/tkool-serif-assist/releases/download/v1.0.0/tkool-serif-assist-v1.0.0.zip)**
+
+ZIPを展開して `serif_gui.exe` をダブルクリックするだけです。Python不要。
 
 ## 特徴
 
